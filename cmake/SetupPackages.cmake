@@ -142,3 +142,17 @@ if (ENABLE_UMR)
                        LINK_FLAGS    ${UMR_CXX_LINK_FLAGS}
                        DEFINES USE_UMR)
 endif()
+
+if (ENABLE_CALIPER)
+  find_package(caliper REQUIRED)
+
+  if (caliper_FOUND)
+    message(STATUS "Caliper enabled: ${caliper_INSTALL_PREFIX}")
+  else()
+    message(FATAL_ERROR "Caliper not found!")
+  endif()
+
+  blt_register_library(NAME caliper
+    INCLUDES ${caliper_INCLUDE_DIR}
+    LIBRARIES caliper)
+endif()

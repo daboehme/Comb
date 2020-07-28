@@ -31,6 +31,7 @@ set(ENABLE_GDSYNC OFF CACHE BOOL "Build GDSYNC support")
 set(ENABLE_GPUMP OFF CACHE BOOL "Build GPUMP support")
 set(ENABLE_MP OFF CACHE BOOL "Build MP support")
 set(ENABLE_UMR OFF CACHE BOOL "Build UMR support")
+set(ENABLE_CALIPER OFF CACHE BOOL "Build Caliper support")
 
 set(COMB_CXX_STANDARD_FLAG "default" CACHE STRING "Specific c++ standard flag to use, default attempts to autodetect the highest available")
 
@@ -116,6 +117,10 @@ endif()
 
 if (ENABLE_UMR)
   set(comb_depends ${comb_depends} umr)
+endif()
+
+if (ENABLE_CALIPER)
+  list(APPEND comb_depends caliper)
 endif()
 
 blt_add_executable(

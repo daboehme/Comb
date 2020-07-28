@@ -1,4 +1,5 @@
 /build_*
+/build-*
 /install_*
 *.swp
 *~

@@ -27,6 +27,10 @@
 #include <unistd.h>
 #include <sched.h>
 
+#ifdef COMB_ENABLE_CALIPER
+#include <caliper/cali.h>
+#endif
+
 #define PRINT_THREAD_MAP
 
 #ifdef PRINT_THREAD_MAP
@@ -38,6 +42,10 @@ int main(int argc, char** argv)
 #ifdef COMB_ENABLE_MPI
   int required = MPI_THREAD_FUNNELED; // MPI_THREAD_SINGLE, MPI_THREAD_FUNNELED, MPI_THREAD_SERIALIZED, MPI_THREAD_MULTIPLE
   int provided = detail::MPI::Init_thread(&argc, &argv, required);
+#endif
+
+#ifdef COMB_ENABLE_CALIPER
+  CALI_MARK_FUNCTION_BEGIN;
 #endif
 
   comb_setup_files();
@@ -742,6 +750,10 @@ int main(int argc, char** argv)
   } // end region MPI communication via comminfo
 
   comb_teardown_files();
+
+#ifdef COMB_ENABLE_CALIPER
+  CALI_MARK_FUNCTION_END;
+#endif
 
 #ifdef COMB_ENABLE_MPI
   detail::MPI::Finalize();

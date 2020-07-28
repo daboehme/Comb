@@ -31,6 +31,10 @@
 
 #include "ExecContext.hpp"
 
+#ifdef COMB_ENABLE_CALIPER
+#include <caliper/cali.h>
+#endif
+
 struct Timer {
 
   enum {
@@ -269,12 +273,18 @@ struct Range {
       id = nvtxRangeStartEx(&eventAttrib);
 #endif
       name = name_;
+#ifdef COMB_ENABLE_CALIPER
+      cali_begin_region(name);
+#endif
     }
   }
 
   void stop()
   {
     if(name != nullptr) {
+#ifdef COMB_ENABLE_CALIPER
+      cali_end_region(name);
+#endif
 #ifdef COMB_ENABLE_CUDA
       nvtxRangeEnd(id);
 #endif

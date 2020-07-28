@@ -62,6 +62,7 @@
 #cmakedefine COMB_ENABLE_GPUMP
 #cmakedefine COMB_ENABLE_MP
 #cmakedefine COMB_ENABLE_UMR
+#cmakedefine COMB_ENABLE_CALIPER
 
 #ifdef COMB_ENABLE_CUDA
 #if defined(CUDART_VERSION) && CUDART_VERSION >= 10000
