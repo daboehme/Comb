@@ -29,6 +29,7 @@
 
 #ifdef COMB_ENABLE_CALIPER
 #include <caliper/cali.h>
+#include <caliper/cali-manager.h>
 #endif
 
 #define PRINT_THREAD_MAP
@@ -42,10 +43,6 @@ int main(int argc, char** argv)
 #ifdef COMB_ENABLE_MPI
   int required = MPI_THREAD_FUNNELED; // MPI_THREAD_SINGLE, MPI_THREAD_FUNNELED, MPI_THREAD_SERIALIZED, MPI_THREAD_MULTIPLE
   int provided = detail::MPI::Init_thread(&argc, &argv, required);
-#endif
-
-#ifdef COMB_ENABLE_CALIPER
-  CALI_MARK_FUNCTION_BEGIN;
 #endif
 
   comb_setup_files();
@@ -144,12 +141,20 @@ int main(int argc, char** argv)
   // stores whether each memory type is available for use
   alloc.host.m_available = true;
 
+  const char* caliper_cfg = "";
+
   IdxT i = 1;
   IdxT s = 0;
   for(; i < argc; ++i) {
     if (argv[i][0] == '-') {
       // options
-      if (strcmp(&argv[i][1], "comm") == 0) {
+      if (strcmp(&argv[i][1], "caliper") == 0) {
+        if (i+1 < argc && argv[i+1][0] != '-') {
+          caliper_cfg = argv[++i];
+        } else {
+          fgprintf(FileGroup::err_master, "No argument to caliper option\n");
+        }
+      } else if (strcmp(&argv[i][1], "comm") == 0) {
         if (i+1 < argc && argv[i+1][0] != '-') {
           ++i;
           if (strcmp(argv[i], "cutoff") == 0) {
@@ -641,6 +646,13 @@ int main(int argc, char** argv)
   }
 #endif // ifdef COMB_ENABLE_OPENMP
 
+#ifdef COMB_ENABLE_CALIPER
+  cali::ConfigManager mgr(caliper_cfg);
+  if (mgr.error()) 
+    fgprintf(FileGroup::err_master, "Caliper: Error: %s\n", mgr.error_msg().c_str());
+  mgr.start();
+  CALI_MARK_FUNCTION_BEGIN;
+#endif
 
   GlobalMeshInfo global_info(sizes, comminfo.size, divisions, periodic, ghost_widths);
 
@@ -709,7 +721,16 @@ int main(int argc, char** argv)
   // warm-up memory pools
   COMB::warmup(exec, alloc, exec_avail, tm, num_vars+1, info.totallen);
 
+#ifdef COMB_ENABLE_CALIPER
+  CALI_MARK_BEGIN("test_copy");
+#endif
+
   COMB::test_copy(comminfo, exec, alloc, exec_avail, tm, num_vars, info.totallen, ncycles);
+
+#ifdef COMB_ENABLE_CALIPER
+  CALI_MARK_END("test_copy");
+  CALI_MARK_BEGIN("test_cycles");
+#endif
 
   if (do_basic_only) {
 
@@ -747,13 +768,15 @@ int main(int argc, char** argv)
 
   }
 
+#ifdef COMB_ENABLE_CALIPER
+  CALI_MARK_END("test_cycles");
+  CALI_MARK_FUNCTION_END;
+  mgr.flush();
+#endif
+
   } // end region MPI communication via comminfo
 
   comb_teardown_files();
-
-#ifdef COMB_ENABLE_CALIPER
-  CALI_MARK_FUNCTION_END;
-#endif
 
 #ifdef COMB_ENABLE_MPI
   detail::MPI::Finalize();
